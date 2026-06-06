@@ -144,17 +144,25 @@ void render_image_to_terminal(const unsigned char *encoded_bytes, size_t size) {
     int term_w, term_h;
     get_terminal_size(&term_w, &term_h);
 
-    int max_display_h = term_h - 6;
+    // Reserve 5 lines + 1 line for the next shell prompt
+    int metadata_rows = 5;
+    int max_text_rows = term_h - metadata_rows - 1; 
+    if (max_text_rows < 2) {
+        max_text_rows = 2;
+    }
+
+    int max_pixel_h = max_text_rows * 2;
+    int max_pixel_w = term_w - 2;
+
     int target_w = term_w - 2;
     int target_h = (orig_h * target_w) / orig_w;
 
-    if (target_h > max_display_h) {
-        target_h = max_display_h;
-        if (target_h % 2 != 0) {
-            target_h--;
-        }
+    if (target_h > max_pixel_h) {
+        target_h = max_pixel_h;
         target_w = (orig_w * target_h) / orig_h;
     }
+
+    target_h = (target_h / 2) * 2;
 
     float x_ratio = (float)orig_w / target_w;
     float y_ratio = (float)orig_h / target_h;
@@ -164,6 +172,16 @@ void render_image_to_terminal(const unsigned char *encoded_bytes, size_t size) {
             int orig_x = (int)(screen_x * x_ratio);
             int orig_y_top = (int)(screen_y * y_ratio);
             int orig_y_bot = (int)((screen_y + 1)* y_ratio);
+
+            if (orig_x >= orig_w) {
+                orig_x = orig_w - 1;
+            }
+            if (orig_y_top >= orig_h) {
+                orig_y_top = orig_h -1;
+            }
+            if (orig_y_bot >= orig_h) {
+                orig_y_bot = orig_h -1;
+            }
 
             int top_idx = (orig_y_top * orig_w + orig_x) * 3;
             int bot_idx = (orig_y_bot * orig_w + orig_x) * 3;
