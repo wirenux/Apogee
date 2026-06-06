@@ -95,6 +95,25 @@ void get_terminal_size(int *width, int *height) {
     }
 }
 
+void render_image_to_terminal(const unsigned char *encoded_bytes, size_t size) {
+    int orig_w, orig_h, channels;
+
+    unsigned char *pixels = stbi_load_from_memory(encoded_bytes, (int)size, &orig_w, &orig_h, &channels, 3);
+    if (!pixels) {
+        fprintf(stderr, "\e[1;31mError:\e[0m Failed to decode image: %s\n", stbi_failure_reason());
+        return;
+    }
+
+    int term_w, term_h;
+    get_terminal_size(&term_w, &term_h);
+
+    int target_w = term_w - 2;
+    int target_h = (orig_h * target_w) / orig_w;
+
+    float x_ratio = (float)orig_w / target_w;
+    float y_ratio = (float)orig_h / target_h;
+}
+
 int main(void) {
     curl_global_init(CURL_GLOBAL_ALL);
 
