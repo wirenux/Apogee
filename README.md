@@ -6,7 +6,10 @@ Apogee is a designed to be lightweight and fast.
 
 It fetches the daily JSON payload from NASA's API, download the target image, decode it entirely in memory, and translate the pixels into true-color ANSI half-blocks.
 
-Edge-to-edge visual rendered right above your shell prompt.
+
+## 🖼️ Image
+
+![Apogee Demo](images/main.png)
 
 ## ⭐ Features
 
