@@ -182,7 +182,6 @@ int main(void) {
     }
     
     // Cleanup
-    free(img_response.memory);
     free(extracted_img_url);
     free(json_response.memory);
 
