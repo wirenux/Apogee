@@ -58,7 +58,7 @@ int main(void) {
         if (res != CURLE_OK) {
             fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
         } else {
-            printf("Fetched %lu bytse. \n", (unsigned long)chunk.size);
+            printf("Fetched %lu byte. \n", (unsigned long)chunk.size);
             printf("Paylod:\n%s\n", chunk.memory);
         }
 
