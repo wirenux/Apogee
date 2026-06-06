@@ -29,8 +29,8 @@ int main(void) {
     char *api_key = getenv("NASA_API_KEY");
 
     if (!api_key) {
-        api_key = "DEMO_KEY";
-        fprintf(stderr, "Warning: NASA_API_KEY not set. Using DEMO_KEY (rate limited).\n");
+        fprintf(stderr, "\e[1;31mError:\e[0m NASA_API_KEY not set. Get one at : https://api.nasa.gov/ (it's free).\n");
+        return 0;
     }
 
     CURL *curl_handle;
