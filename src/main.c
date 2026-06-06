@@ -207,20 +207,45 @@ int main(int agrc, char *argv[]) {
 
     struct ApodMetadata meta = extract_metadata(json_response.memory);
     if (meta.url == NULL) {
+        cJSON *err_root = cJSON_Parse(json_response.memory);
+        int is_rate_limit = 0;
+        char *err_msg = NULL;
+
+        if (err_root) {
+            cJSON *error_obj = cJSON_GetObjectItemCaseSensitive(err_root, "error");
+            if (error_obj) {
+                cJSON *code_item = cJSON_GetObjectItemCaseSensitive(error_obj, "code");
+                cJSON *msg_item = cJSON_GetObjectItemCaseSensitive(error_obj, "message");
+                
+                if (cJSON_IsString(code_item) && strcmp(code_item->valuestring, "OVER_RATE_LIMIT") == 0) {
+                    is_rate_limit = 1;
+                    if (cJSON_IsString(msg_item) && msg_item->valuestring) {
+                        err_msg = strdup(msg_item->valuestring);
+                    }
+                }
+            }
+            cJSON_Delete(err_root);
+        }
+
+        if (is_rate_limit) {
+            fprintf(stderr, "\e[1;31mError:\e[0m NASA API Rate Limit Exceeded (\e[1;33mOVER_RATE_LIMIT\e[0m)\n");
+            if (err_msg) {
+                fprintf(stderr, "Message: %s\n", err_msg);
+                free(err_msg);
+            }
+            fprintf(stderr, "\e[1;36mTip:\e[0m The shared 'DEMO_KEY' is heavily throttled globally. \n");
+            fprintf(stderr, "     Get your own free API key at https://api.nasa.gov/ and export it to your environment:\n");
+            fprintf(stderr, "     export NASA_API_KEY=\"your_key_here\"\n");
+        } else {
+            // Fallback for other unexpected JSON payloads
+            fprintf(stderr, "\e[1;31mError:\e[0m Failed to extract payload asset target URL.\n");
+            fprintf(stderr, "Server response block:\n%s\n", json_response.memory);
+        }
+
         free(json_response.memory);
         curl_global_cleanup();
         return 1;
     }
-    
-    // char *extracted_img_url = extract_image_url(json_response.memory);
-    // if (extracted_img_url == NULL) {
-    //     free(json_response.memory);
-    //     curl_global_cleanup();
-    //     return 1;
-    // }
-
-    // printf("\e[1;32mSuccess:\e[0m Extracted Image URL: %s\n", extracted_img_url);
-    // printf("Downloading space image asset...\n");
 
     struct MemoryChunk img_response = fetch_url(meta.url);
     if (img_response.memory == NULL) {
