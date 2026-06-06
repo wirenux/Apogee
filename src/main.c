@@ -14,6 +14,12 @@ struct MemoryChunk {
     size_t size;
 };
 
+struct ApodMetadata {
+    char *url;
+    char *title;
+    char *date;
+};
+
 static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, void *userp) {
     size_t real_size = size * nmemb;
     struct MemoryChunk *mem = (struct MemoryChunk *)userp;
@@ -60,6 +66,35 @@ struct MemoryChunk fetch_url(const char *url) {
         curl_easy_cleanup(curl_handle);
     }
     return chunk;
+}
+
+struct ApodMetadata extract_metadata(const char *json_payload) {
+    struct ApodMetadata meta = {NULL, NULL, NULL};
+
+    cJSON *root = cJSON_Parse(json_payload);
+    if (root == NULL) {
+        return meta;
+    }
+
+    cJSON *url_item = cJSON_GetObjectItemCaseSensitive(root, "hdurl");
+    if (!url_item || !url_item->valuestring) {
+        url_item = cJSON_GetObjectItemCaseSensitive(root, "url");
+    }
+    cJSON *title_item = cJSON_GetObjectItemCaseSensitive(root, "title");
+    cJSON *date_item = cJSON_GetObjectItemCaseSensitive(root, "date");
+
+    if (cJSON_IsString(url_item) && url_item->valuestring) {
+        meta.url = strdup(url_item->valuestring);
+    }
+    if (cJSON_IsString(title_item) && title_item->valuestring) {
+        meta.title = strdup(title_item->valuestring);
+    }
+    if (cJSON_IsString(date_item) && date_item->valuestring) {
+        meta.date = strdup(date_item->valuestring);
+    }
+
+    cJSON_Delete(root);
+    return meta;
 }
 
 char *extract_image_url(const char *json_payload) {
@@ -109,8 +144,17 @@ void render_image_to_terminal(const unsigned char *encoded_bytes, size_t size) {
     int term_w, term_h;
     get_terminal_size(&term_w, &term_h);
 
+    int max_display_h = term_h - 6;
     int target_w = term_w - 2;
     int target_h = (orig_h * target_w) / orig_w;
+
+    if (target_h > max_display_h) {
+        target_h = term_w - 2;
+        if (target_h % 2 != 0) {
+            target_h--;
+        }
+        target_w = (orig_w * target_h) / orig_h;
+    }
 
     float x_ratio = (float)orig_w / target_w;
     float y_ratio = (float)orig_h / target_h;
@@ -160,36 +204,48 @@ int main(int agrc, char *argv[]) {
         curl_global_cleanup();
         return 1;
     }
-    
-    char *extracted_img_url = extract_image_url(json_response.memory);
-    if (extracted_img_url == NULL) {
+
+    struct ApodMetadata meta = extract_metadata(json_response.memory);
+    if (meta.url == NULL) {
         free(json_response.memory);
         curl_global_cleanup();
         return 1;
     }
+    
+    // char *extracted_img_url = extract_image_url(json_response.memory);
+    // if (extracted_img_url == NULL) {
+    //     free(json_response.memory);
+    //     curl_global_cleanup();
+    //     return 1;
+    // }
 
-    printf("\e[1;32mSuccess:\e[0m Extracted Image URL: %s\n", extracted_img_url);
-    printf("Downloading space image asset...\n");
+    // printf("\e[1;32mSuccess:\e[0m Extracted Image URL: %s\n", extracted_img_url);
+    // printf("Downloading space image asset...\n");
 
-    struct MemoryChunk img_response = fetch_url(extracted_img_url);
+    struct MemoryChunk img_response = fetch_url(meta.url);
     if (img_response.memory == NULL) {
         fprintf(stderr, "\e[1;31mError:\e[0m Failed to download image asset from NASA.\n");
-        free(extracted_img_url);
+        free(meta.url);
+        free(meta.title);
+        free(meta.date);
         free(json_response.memory);
         curl_global_cleanup();
         return 1;
     }
 
-    if (img_response.memory != NULL) {
-        printf("\e[1;32mSuccess:\e[0m Downloaded raw image buffer (%lu bytes).\n", (unsigned long)img_response.size);
-        printf("Decoding and rendering space artifact...\n\n");
-        render_image_to_terminal((unsigned char*)img_response.memory, img_response.size);
-        
-        free(img_response.memory);
-    }
+    printf("\033[2J\033[H");
+    render_image_to_terminal((unsigned char*)img_response.memory, img_response.size);
+
+    printf("\n\e[1;35m┌─── NASA ASTRONOMY PICTURE OF THE DAY ───────────────────────────────────┐\e[0m\n");
+    printf("\e[1;35m│\e[0m \e[1;33mTitle:\e[0m %s\n", meta.title ? meta.title : "N/A");
+    printf("\e[1;35m│\e[0m \e[1;33mDate :\e[0m %s\n", meta.date ? meta.date : "N/A");
+    printf("\e[1;35m└─────────────────────────────────────────────────────────────────────────┘\e[0m\n\n");
     
     // Cleanup
-    free(extracted_img_url);
+    free(img_response.memory);
+    free(meta.url);
+    free(meta.title);
+    free(meta.date);
     free(json_response.memory);
 
     curl_global_cleanup();

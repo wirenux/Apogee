@@ -1,7 +1,7 @@
 all: clean build
 
 run: build
-	@./build/Apogee
+	@./build/Apogee $(ARGS)
 
 build:
 	@mkdir -p build/
