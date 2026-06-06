@@ -112,6 +112,25 @@ void render_image_to_terminal(const unsigned char *encoded_bytes, size_t size) {
 
     float x_ratio = (float)orig_w / target_w;
     float y_ratio = (float)orig_h / target_h;
+
+    for (int screen_y = 0; screen_y < target_h - 1; screen_y += 2) {
+        for (int screen_x = 0; screen_x < target_w; screen_x++) {
+            int orig_x = (int)(screen_x * x_ratio);
+            int orig_y_top = (int)(screen_y * y_ratio);
+            int orig_y_bot = (int)((screen_y + 1)* y_ratio);
+
+            int top_idx = (orig_y_top * orig_w + orig_x) * 3;
+            int bot_idx = (orig_y_bot * orig_w + orig_x) * 3;
+
+            // set foreground (top) and background (bottom) color then print the half-block
+            printf("\033[38;2;%d;%d;%dm\033[48;2;%d;%d;%dm▀", 
+                   pixels[top_idx], pixels[top_idx+1], pixels[top_idx+2],
+                   pixels[bot_idx], pixels[bot_idx+1], pixels[bot_idx+2]);
+        }
+        // reset text color
+        printf("\033[0m\n");
+    }
+    stbi_image_free(pixels);
 }
 
 int main(void) {
