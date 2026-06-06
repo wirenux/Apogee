@@ -1,3 +1,6 @@
+#define STB_IMAGE_IMPLEMENTATION
+#include "../include/stb_image.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,7 +8,6 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include "../include/cJSON.h"
-#include "../include/stb_image.h"
 
 struct MemoryChunk {
     char *memory;
@@ -171,8 +173,13 @@ int main(void) {
         return 1;
     }
 
-    printf("\e[1;32mSuccess:\e[0m Downloaded raw image buffer (%lu bytes).\n", (unsigned long)img_response.size);
-    
+    if (img_response.memory != NULL) {
+        printf("\e[1;32mSuccess:\e[0m Downloaded raw image buffer (%lu bytes).\n", (unsigned long)img_response.size);
+        printf("Decoding and rendering space artifact...\n\n");
+        render_image_to_terminal((unsigned char*)img_response.memory, img_response.size);
+        
+        free(img_response.memory);
+    }
     
     // Cleanup
     free(img_response.memory);
