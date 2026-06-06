@@ -135,14 +135,21 @@ void render_image_to_terminal(const unsigned char *encoded_bytes, size_t size) {
     stbi_image_free(pixels);
 }
 
-int main(void) {
+int main(int agrc, char *argv[]) {
     curl_global_init(CURL_GLOBAL_ALL);
 
-    char *api_key = getenv("NASA_API_KEY");
+    char *api_key = NULL;
+
+    if (agrc > 1 && strcmp(argv[1], "--demo") == 0) {
+        api_key = "DEMO_KEY";
+    } else {
+        api_key = getenv("NASA_API_KEY");
+    }
 
     if (!api_key) {;
         fprintf(stderr, "\e[1;31mError:\e[0m NASA_API_KEY not set. Get one at : https://api.nasa.gov/ (it's free).\n");
-        return 0;
+        fprintf(stderr, "Or bypass authentication by running: \e[1;36mmake run ARGS=\"--demo\"\e[0m\n");
+        return 1;
     }
 
     char url_buffer[256];
