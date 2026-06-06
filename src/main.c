@@ -149,7 +149,7 @@ void render_image_to_terminal(const unsigned char *encoded_bytes, size_t size) {
     int target_h = (orig_h * target_w) / orig_w;
 
     if (target_h > max_display_h) {
-        target_h = term_w - 2;
+        target_h = max_display_h;
         if (target_h % 2 != 0) {
             target_h--;
         }
