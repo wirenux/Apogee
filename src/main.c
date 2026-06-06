@@ -2,7 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <curl/curl.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 #include "../include/cJSON.h"
+#include "../include/stb_image.h"
 
 struct MemoryChunk {
     char *memory;
@@ -80,6 +83,18 @@ char *extract_image_url(const char *json_payload) {
     return extracted_url;
 }
 
+void get_terminal_size(int *width, int *height) {
+    struct winsize w;
+    if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &w) == 0) {
+        *width = w.ws_col;
+        *height = w.ws_row;
+    } else {
+        // Fallback
+        *width = 80;
+        *height = 24;
+    }
+}
+
 int main(void) {
     curl_global_init(CURL_GLOBAL_ALL);
 
@@ -125,7 +140,7 @@ int main(void) {
     free(img_response.memory);
     free(extracted_img_url);
     free(json_response.memory);
-    
+
     curl_global_cleanup();
     return 0;
 }
