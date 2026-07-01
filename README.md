@@ -74,6 +74,13 @@ make run ARGS="--demo"
 ./build/apogee --demo
 ```
 
+## 🧠 Use of AI
+
+In this project the AI was used for:
+
+* README Structure / Skeleton
+* Mind Mapping
+
 ## 📃 License
 
 [MIT LICENSE](./LICENSE)

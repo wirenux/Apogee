@@ -280,8 +280,8 @@ int main(int agrc, char *argv[]) {
     render_image_to_terminal((unsigned char*)img_response.memory, img_response.size);
 
     printf("\n\e[1;35m┌─── NASA ASTRONOMY PICTURE OF THE DAY ───────────────────────────────────┐\e[0m\n");
-    printf("\e[1;35m│\e[0m \e[1;33mTitle:\e[0m %s\n", meta.title ? meta.title : "N/A");
-    printf("\e[1;35m│\e[0m \e[1;33mDate :\e[0m %s\n", meta.date ? meta.date : "N/A");
+    printf("\e[1;35m│\e[0m \e[1;33mTitle:\e[0m %-65s\e[1;35m│\e[0m\n", meta.title ? meta.title : "N/A"); 
+    printf("\e[1;35m│\e[0m \e[1;33mDate :\e[0m %-65s\e[1;35m│\e[0m\n", meta.date ? meta.date : "N/A"); 
     printf("\e[1;35m└─────────────────────────────────────────────────────────────────────────┘\e[0m\n\n");
     
     // Cleanup
